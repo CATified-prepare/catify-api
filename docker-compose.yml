@@ -1,4 +1,33 @@
 services:
+  api:
+    build: .
+    container_name: catify-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8080}:8080"
+    environment:
+      # Postgres (connect via Compose DNS name "postgres")
+      DB_HOST: postgres
+      # IMPORTANT: this is the *container* port, not the host-mapped port.
+      DB_PORT: 5432
+      DB_NAME: "${POSTGRES_DB:-catify}"
+      DB_USER: "${POSTGRES_USER:-catify}"
+      DB_PASSWORD: "${POSTGRES_PASSWORD:-catify}"
+
+      # Redis (connect via Compose DNS name "redis")
+      REDIS_HOST: redis
+      # IMPORTANT: this is the *container* port, not the host-mapped port.
+      REDIS_PORT: 6379
+
+      # Qdrant (connect via Compose DNS name "qdrant")
+      QDRANT_HOST: qdrant
+      # IMPORTANT: this is the *container* port, not the host-mapped port.
+      QDRANT_PORT: 6333
+    depends_on:
+      - postgres
+      - redis
+      - qdrant
+
   postgres:
     image: postgres:${POSTGRES_TAG:-16-alpine}
     container_name: catify-postgres
@@ -12,7 +41,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-catify} -jkbd ${POSTGRES_DB:-catify}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-catify} -d ${POSTGRES_DB:-catify}"]
       interval: 5s
       timeout: 3s
       retries: 20
