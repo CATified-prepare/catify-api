@@ -41,7 +41,7 @@ Create the project skeleton:
 
 ### US-002: Docker Compose Infrastructure [infra] — 3 pts
 **Assignee:** prateekarora7  
-**Status:** To Do
+**Status:** Done
 
 Set up local infrastructure:
 - Create `docker-compose.yml` with Qdrant, PostgreSQL, Redis
