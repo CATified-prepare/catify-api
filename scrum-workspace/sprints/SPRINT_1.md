@@ -2,7 +2,7 @@
 
 > **Sprint Duration:** 2 weeks  
 > **Sprint Goal:** Get a working Spring Boot app that can talk to Claude and connect to Qdrant  
-> **Total Points:** 16  
+> **Total Points:** 19  
 > **Team Capacity:** 2 devs × 50 hrs = 100 hrs
 
 ---
@@ -91,12 +91,39 @@ Connect to Qdrant:
 
 ---
 
+### US-005: Local LLM (Ollama) Profile + Endpoint [ai] — 3 pts
+**Assignee:** prateekarora7  
+**Status:** To Do
+
+Connect a locally hosted Ollama model for local development and expose an endpoint for it:
+- Add `application-local.yml/.yaml` for the `local` profile
+  - Configure `spring.ai.ollama.base-url`
+    - Host/WSL: `http://localhost:11434`
+    - Docker Compose: `http://ollama:11434`
+  - Configure chat model via env var (e.g. `OLLAMA_CHAT_MODEL=llama3.2`)
+- Update `docker-compose.yml` to support local profile execution
+  - Ensure API can run with `SPRING_PROFILES_ACTIVE=local`
+  - Pass `OLLAMA_BASE_URL` and `OLLAMA_CHAT_MODEL` to the container (when using Docker)
+  - (Optional) Add an `ollama` service in Compose for teams not running Ollama in WSL
+- Add a basic API endpoint to query the local LLM:
+  - `POST /api/v1/local/ask`
+  - Request: `{ "question": "..." }`
+  - Response: `{ "answer": "..." }`
+  - Uses Spring AI `ChatClient` so provider selection stays profile-based
+- Add a curl example in the story notes showing a working call with `local` profile enabled
+
+**Done when:** With `SPRING_PROFILES_ACTIVE=local`, calling `POST /api/v1/local/ask` returns an answer from Ollama.
+
+---
+
 ## 🤝 Dependencies Between Stories
 
 ```
 US-001 (project setup) ──→ US-003 (Claude integration)
                        ──→ US-004 (Qdrant setup)
 US-002 (Docker)        ──→ US-004 (Qdrant needs Docker running)
+US-001 (project setup) ──→ US-005 (Local Ollama profile/endpoint)
+US-002 (Docker)        ──→ US-005 (Optional: run Ollama via Docker/Compose)
 ```
 
 **Recommended order:**
