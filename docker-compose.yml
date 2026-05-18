@@ -1,0 +1,95 @@
+services:
+  postgres:
+    image: postgres:${POSTGRES_TAG:-16-alpine}
+    container_name: catify-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:-catify}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-catify}"
+      POSTGRES_DB: "${POSTGRES_DB:-catify}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-catify} -jkbd ${POSTGRES_DB:-catify}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:${REDIS_TAG:-7-alpine}
+    container_name: catify-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  qdrant:
+    image: qdrant/qdrant:${QDRANT_TAG:-latest}
+    container_name: catify-qdrant
+    restart: unless-stopped
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  pgadmin:
+    image: dpage/pgadmin4:${PGADMIN_TAG:-latest}
+    container_name: catify-pgadmin
+    restart: unless-stopped
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "${PGADMIN_DEFAULT_EMAIL:-admin@local.com}"
+      PGADMIN_DEFAULT_PASSWORD: "${PGADMIN_DEFAULT_PASSWORD:-admin}"
+      # Avoid prompting for an additional "master password" when using stored credentials.
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      # Ensure servers.json gets imported even when the pgadmin_data volume already exists.
+      PGADMIN_REPLACE_SERVERS_ON_STARTUP: "True"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    configs:
+      - source: pgadmin-pgpass
+        target: /config/pgpass
+        uid: "5050"
+        gid: "5050"
+        mode: 0400
+      - source: pgadmin-servers
+        target: /pgadmin4/servers.json
+        mode: 0444
+    depends_on:
+      - postgres
+
+configs:
+  pgadmin-servers:
+    content: |
+      {
+        "Servers": {
+          "1": {
+            "Name": "Catify Postgres",
+            "Group": "Servers",
+            "Host": "postgres",
+            "Port": 5432,
+            "MaintenanceDB": "${POSTGRES_DB:-catify}",
+            "Username": "${POSTGRES_USER:-catify}",
+            "PassFile": "/config/pgpass"
+          }
+        }
+      }
+  pgadmin-pgpass:
+    content: |
+      postgres:5432:*:${POSTGRES_USER:-catify}:${POSTGRES_PASSWORD:-catify}
+
+volumes:
+  postgres_data:
+  redis_data:
+  qdrant_data:
+  pgadmin_data:
