@@ -1,9 +1,13 @@
 spring:
   application:
     name: catify-api
+  config:
+    import: optional:file:.env[.properties]
+
+
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/catify}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/catify}
     username: ${SPRING_DATASOURCE_USERNAME:catify}
     password: ${SPRING_DATASOURCE_PASSWORD:catify}
     driver-class-name: org.postgresql.Driver
@@ -19,13 +23,14 @@ spring:
 
   data:
     redis:
-      host: ${REDIS_HOST:redis}
-      port: ${REDIS_PORT:-6379}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}   # leave blank if no password
       timeout: 2000ms
 
   ai:
     vectorstore:
       qdrant:
-        host: ${QDRANT_HOST:qdrant}
+        host: ${QDRANT_HOST:localhost}
         port: ${QDRANT_PORT:6333}
+

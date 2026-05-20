@@ -71,18 +71,21 @@
 **So that** I can develop for free (Gemini) and deploy with Claude in production.
 
 **Acceptance Criteria:**
-- [ ] `CatChatService` created with `ChatClient` using constructor injection
-- [ ] System prompt configured: CAT-only assistant behavior
-- [ ] `application-dev.yml` uses Google Gemini (`gemini-2.0-flash`) with `${GEMINI_API_KEY}`
+- [x] `CatChatService` created with `ChatClient` using constructor injection
+- [x] System prompt configured: CAT-only assistant behavior
+- [x] `application-gemini.yaml` uses Google GenAI (`gemini-3.1-flash-lite`) with `${GEMINI_API_KEY}`
 - [ ] `application-prod.yml` uses Claude API with `${ANTHROPIC_API_KEY}`
-- [ ] Both `spring-ai-vertex-ai-gemini-spring-boot-starter` and `spring-ai-anthropic-spring-boot-starter` in `pom.xml`
-- [ ] Basic `/api/v1/cat/ask` endpoint works with dev profile (Gemini)
+- [x] `spring-ai-starter-model-google-genai` in `pom.xml` (Spring AI 2.0.0-SNAPSHOT)
+- [x] Basic `/api/v1/cat/ask` endpoint works with gemini profile
 - [ ] Error handling: returns friendly message if LLM API is down
 - [ ] Unit test with mocked ChatClient
 
 **Technical Notes:**
-- See ADR-001 for decision rationale
+- See ADR-001 for original decision rationale
+- See ADR-003 for model change (`gemini-2.0-flash` → `gemini-3.1-flash-lite`) and SNAPSHOT workarounds
 - Spring AI's `ChatClient` abstraction makes provider swapping config-only
+- Free tier: 15 RPM, 500 RPD — sufficient for development
+- Embedding autoconfig excluded due to SNAPSHOT bug (ADR-003)
 
 ---
 
@@ -91,23 +94,30 @@
 **Priority:** P0  
 **Points:** 5  
 **Assignee:** prateekarora7  
+**Status:** 🔨 In Progress
 
 **As a** developer,  
 **I want** Qdrant configured as the vector store via Spring AI,  
 **So that** I can store and search CAT question embeddings.
 
 **Acceptance Criteria:**
-- [ ] `spring-ai-qdrant-store-spring-boot-starter` configured in `application.yml`
-- [ ] Collection `cat-questions` auto-created on startup (`initialize-schema: true`)
-- [ ] `application-dev.yml`: Google `text-embedding-004` (768 dims, free)
+- [x] `spring-ai-starter-vector-store-qdrant` configured in `pom.xml`
+- [x] Qdrant connects successfully on startup (gemini profile → localhost:6333)
+- [x] `application-gemini.yaml`: `gemini-embedding-002` with `embedding.api-key` set
 - [ ] `application-prod.yml`: OpenAI `text-embedding-3-small` (1536 dims, paid)
+- [ ] Collection `cat-questions` auto-created on startup (`initialize-schema: true`)
 - [ ] Can programmatically add a `Document` to Qdrant and retrieve it via similarity search
 - [ ] Qdrant dashboard shows the collection with vectors
 - [ ] Connection failure handled gracefully (log error, don't crash)
 
 **Technical Notes:**
-- Dev and prod use different embedding dimensions (768 vs 1536) — separate Qdrant collections per environment
-- See ADR-001 for decision rationale
+- Chat and embedding use **separate config prefixes** — both must have `api-key` set explicitly:
+  - `spring.ai.google.genai.api-key` → chat
+  - `spring.ai.google.genai.embedding.api-key` → embedding (must be set separately)
+- No autoconfigure excludes needed
+- Dev embedding model: `gemini-embedding-002` (100 RPM, 1K RPD free tier)
+- Prod: OpenAI `text-embedding-3-small` (1536 dims) — separate Qdrant collection from dev
+- See ADR-003 for full investigation history
 
 ---
 
@@ -376,4 +386,3 @@
 | US-016 | Kubernetes Manifests           | P3       | 5      | Backlog  |
 
 **Total: 76 story points across 4 sprints + backlog**
-

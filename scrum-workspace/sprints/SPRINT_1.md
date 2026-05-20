@@ -26,7 +26,7 @@
 
 ### US-001: Spring Boot Project Setup [infra] — 3 pts
 **Assignee:** vagrover  
-**Status:** To Do
+**Status:** Done ✅
 
 Create the project skeleton:
 - Initialize Spring Boot 3.x + Java 21 project
@@ -56,7 +56,7 @@ Set up local infrastructure:
 
 ### US-003: LLM Integration (Gemini Dev / Claude Prod) [ai] — 5 pts
 **Assignee:** vagrover  
-**Status:** To Do
+**Status:** In Progress 🔨
 
 Wire up LLM (profile-based):
 - Create `CatChatService` with Spring AI `ChatClient`
