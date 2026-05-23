@@ -1,11 +1,20 @@
 package com.catify.catify_api.service;
 
+import com.catify.catify_api.dto.AiMetadata;
 import com.catify.catify_api.dto.ChatRequest;
 import com.catify.catify_api.dto.ChatResponse;
+import com.catify.catify_api.exception.CatifyException;
+import com.catify.catify_api.mapper.AiMetadataMapper;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.ChatClientResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
+
+import static com.catify.catify_api.constant.CatifyConstants.AI_EMPTY_RESPONSE_MESSAGE;
+import static com.catify.catify_api.constant.CatifyConstants.ERROR_CODE_500;
 
 @Service
 public class CatChatService {
@@ -22,19 +31,32 @@ public class CatChatService {
 
     private final ChatClient chatClient;
 
-    public CatChatService(ChatClient.Builder builder) {
+    private final AiMetadataMapper aiMetadataMapper;
+
+    public CatChatService(ChatClient.Builder builder, AiMetadataMapper aiMetadataMapper) {
         this.chatClient = builder
                 .defaultSystem(SYSTEM_PROMPT)
                 .build();
+        this.aiMetadataMapper = aiMetadataMapper;
     }
 
     public ChatResponse ask(ChatRequest request) {
-        String answer = chatClient.prompt()
+        ChatClientResponse response = chatClient.prompt()
                 .user(request.question())
                 .call()
-                .content();
+                .chatClientResponse();
 
-        return new ChatResponse(answer, List.of(), 0);
+        var chatResponse = response.chatResponse();
+
+        String answer = chatResponse == null ? null : Objects.requireNonNull(chatResponse.getResult()).getOutput().getText();
+
+        if (answer == null || answer.isEmpty()) {
+            throw new CatifyException(ERROR_CODE_500, AI_EMPTY_RESPONSE_MESSAGE, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        AiMetadata ai = aiMetadataMapper.toAiMetadata(chatResponse.getMetadata());
+        int tokensUsed = ai != null && ai.totalTokens() != null ? ai.totalTokens() : 0;
+
+        return new ChatResponse(answer, List.of(), tokensUsed, ai);
     }
 }
-
