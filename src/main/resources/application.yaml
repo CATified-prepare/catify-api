@@ -3,7 +3,11 @@ spring:
     name: catify-api
   config:
     import: optional:file:.env[.properties]
-
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.model.ollama.autoconfigure.OllamaApiAutoConfiguration
+      - org.springframework.ai.model.ollama.autoconfigure.OllamaChatAutoConfiguration
+      - org.springframework.ai.model.ollama.autoconfigure.OllamaEmbeddingAutoConfiguration
 
 
   datasource:
@@ -34,3 +38,14 @@ spring:
         host: ${QDRANT_HOST:localhost}
         port: ${QDRANT_PORT:6333}
 
+    model:
+      chat: google-genai
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY}   # used by chat autoconfig
+        chat:
+          model: gemini-3.1-flash-lite
+          temperature: 0.3
+        embedding:
+          api-key: ${GEMINI_API_KEY} # must be set separately — embedding has its own connection properties
+          model: gemini-embedding-002

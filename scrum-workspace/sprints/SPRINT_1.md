@@ -93,7 +93,7 @@ Connect to Qdrant:
 
 ### US-005: Local LLM (Ollama) Profile + Endpoint [ai] — 3 pts
 **Assignee:** prateekarora7  
-**Status:** To Do
+**Status:** Done
 
 Connect a locally hosted Ollama model for local development and expose an endpoint for it:
 - Add `application-local.yml/.yaml` for the `local` profile
@@ -131,7 +131,8 @@ US-002 (Docker)        ──→ US-005 (Optional: run Ollama via Docker/Compose
 2. prateekarora7 starts US-002 in parallel (Day 1–2)
 3. vagrover moves to US-003 (Day 3–7)
 4. prateekarora7 moves to US-004 (Day 3–7)
-5. Days 8–10: Integration testing, bug fixes, demo prep
+5. prateekarora7 moves to US-005(Day 3-7)
+6. Days 8–10: Integration testing, bug fixes, demo prep
 
 ---
 

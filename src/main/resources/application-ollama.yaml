@@ -1,0 +1,46 @@
+spring:
+  config:
+    activate:
+      on-profile: ollama
+  autoconfigure:
+    exclude:
+      # Disable Google GenAI auto-config in the `ollama` Spring profile.
+      # (Gemini can still be the default in other profiles; it's just not active here.)
+      - org.springframework.ai.model.google.genai.autoconfigure.chat.GoogleGenAiChatAutoConfiguration
+      - org.springframework.ai.model.google.genai.autoconfigure.embedding.GoogleGenAiTextEmbeddingAutoConfiguration
+      - org.springframework.ai.model.google.genai.autoconfigure.embedding.GoogleGenAiEmbeddingConnectionAutoConfiguration
+  http:
+    # Spring AI talks to Ollama over HTTP; larger local models can take longer than typical defaults.
+    # This applies only when the `ollama` profile is active.
+    clients:
+      connect-timeout: ${OLLAMA_HTTP_CONNECT_TIMEOUT}
+      read-timeout: ${OLLAMA_HTTP_READ_TIMEOUT}
+  ai:
+    # IMPORTANT: choose exactly one chat model implementation.
+    # Otherwise multiple starters (e.g., google-genai + ollama) can both autoconfigure and clash.
+    model:
+      chat: ollama
+    ollama:
+      base-url: http://localhost:11434
+      http:
+        clients:
+          connect-timeout: 5s
+          read-timeout: 120s
+      # Ollama server URL (default is local Ollama install).
+      # If the API runs inside Docker and Ollama runs on your host:
+      #   set OLLAMA_BASE_URL=http://host.docker.internal:11434
+
+      # Optional: have Spring AI pull models automatically on startup.
+      # Values commonly used: never | when_missing | always
+      init:
+        pull-model-strategy: ${OLLAMA_PULL_MODEL_STRATEGY}
+
+      chat:
+        options:
+          model: ${OLLAMA_CHAT_MODEL}
+          temperature: ${OLLAMA_TEMPERATURE}
+
+      embedding:
+        options:
+          # Popular default embedding model for Ollama.
+          model: ${OLLAMA_EMBEDDING_MODEL}

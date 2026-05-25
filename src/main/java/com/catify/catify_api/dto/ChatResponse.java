@@ -5,6 +5,7 @@ import java.util.List;
 public record ChatResponse(
         String answer,
         List<String> sources,
-        int tokensUsed
+        int tokensUsed,
+        AiMetadata ai
 ) {}
 
