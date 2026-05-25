@@ -56,7 +56,7 @@ Set up local infrastructure:
 
 ### US-003: LLM Integration (Gemini Dev / Claude Prod) [ai] — 5 pts
 **Assignee:** vagrover  
-**Status:** In Progress 🔨
+**Status:** Done ✅
 
 Wire up LLM (profile-based):
 - Create `CatChatService` with Spring AI `ChatClient`
@@ -77,8 +77,8 @@ Wire up LLM (profile-based):
 ---
 
 ### US-004: Qdrant Vector Store Setup [ai] — 5 pts
-**Assignee:** prateekarora7  
-**Status:** To Do
+**Assignee:** vagrover  
+**Status:** In Progress 🔨
 
 Connect to Qdrant:
 - Configure `spring-ai-qdrant-store-spring-boot-starter` in `application.yml`
@@ -91,9 +91,9 @@ Connect to Qdrant:
 
 ---
 
-### US-005: Local LLM (Ollama) Profile + Endpoint [ai] — 3 pts
+### US-017: Local LLM (Ollama) Profile + Endpoint [ai] — 3 pts
 **Assignee:** prateekarora7  
-**Status:** Done
+**Status:** Done ✅
 
 Connect a locally hosted Ollama model for local development and expose an endpoint for it:
 - Add `application-local.yml/.yaml` for the `local` profile
@@ -122,8 +122,8 @@ Connect a locally hosted Ollama model for local development and expose an endpoi
 US-001 (project setup) ──→ US-003 (Claude integration)
                        ──→ US-004 (Qdrant setup)
 US-002 (Docker)        ──→ US-004 (Qdrant needs Docker running)
-US-001 (project setup) ──→ US-005 (Local Ollama profile/endpoint)
-US-002 (Docker)        ──→ US-005 (Optional: run Ollama via Docker/Compose)
+US-001 (project setup) ──→ US-017 (Local Ollama profile/endpoint)
+US-002 (Docker)        ──→ US-017 (Optional: run Ollama via Docker/Compose)
 ```
 
 **Recommended order:**

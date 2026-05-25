@@ -1,7 +1,7 @@
 # 📋 Product Backlog — CAT AI Assistant
 
-> Last updated: May 16, 2026  
-> Total Stories: 16 | Total Points: 89
+> Last updated: May 25, 2026  
+> Total Stories: 17 | Total Points: 92
 
 ---
 
@@ -93,8 +93,8 @@
 
 **Priority:** P0  
 **Points:** 5  
-**Assignee:** prateekarora7  
-**Status:** 🔨 In Progress
+**Assignee:** vagrover  
+**Status:** 🔨 In Progress (Sprint 2 — carried from Sprint 1)
 
 **As a** developer,  
 **I want** Qdrant configured as the vector store via Spring AI,  
@@ -126,6 +126,7 @@
 **Priority:** P0  
 **Points:** 8  
 **Assignee:** prateekarora7  
+**Status:** 🔨 In Progress (Sprint 2)
 
 **As a** developer,  
 **I want** to ingest CAT questions from CSV files into Qdrant,  
@@ -364,25 +365,50 @@
 
 ---
 
+### US-017: Local LLM (Ollama) Profile + Endpoint [ai]
+
+**Priority:** P1  
+**Points:** 3  
+**Assignee:** prateekarora7  
+**Status:** ✅ Done (Sprint 1)
+
+**As a** developer,  
+**I want** a locally hosted Ollama model wired into Spring AI with its own profile and endpoint,  
+**So that** the team can develop and test without hitting cloud LLM APIs or incurring costs.
+
+**Acceptance Criteria:**
+- [x] `application-ollama.yaml` profile configured with `spring.ai.ollama.base-url`
+- [x] Chat model configurable via env var (`OLLAMA_CHAT_MODEL=llama3.2`)
+- [x] `POST /api/v1/local/ask` endpoint returns answer from Ollama
+- [x] `docker-compose.yml` supports `SPRING_PROFILES_ACTIVE=local`
+- [x] Works when Ollama runs in WSL (`http://localhost:11434`) or Docker (`http://ollama:11434`)
+
+**Technical Notes:**
+- Previously mislabeled as US-005 (duplicate number). Renumbered to US-017.
+- See `application-ollama.yaml` and `OllamaWebClientConfig.java`
+
+---
+
 ## 📊 Backlog Summary
 
 | Story  | Title                          | Priority | Points | Sprint   |
 |--------|--------------------------------|----------|--------|----------|
-| US-001 | Spring Boot Project Setup      | P0       | 3      | Sprint 1 |
-| US-002 | Docker Compose Infrastructure  | P0       | 3      | Sprint 1 |
-| US-003 | LLM Integration (Gemini/Claude)| P0       | 5      | Sprint 1 |
-| US-004 | Qdrant Vector Store Setup      | P0       | 5      | Sprint 1 |
-| US-005 | Data Ingestion — CSV Loader    | P0       | 8      | Sprint 2 |
-| US-006 | RAG Search Service             | P0       | 5      | Sprint 2 |
-| US-007 | Guardrail Service              | P0       | 5      | Sprint 2 |
-| US-008 | Conversation Memory            | P1       | 5      | Sprint 3 |
-| US-009 | Streaming Responses (SSE)      | P1       | 5      | Sprint 3 |
-| US-010 | API Key Authentication         | P1       | 5      | Sprint 3 |
-| US-011 | Rate Limiting                  | P2       | 3      | Sprint 4 |
-| US-012 | Global Exception Handling      | P1       | 3      | Sprint 2 |
-| US-013 | Health Checks & Metrics        | P2       | 3      | Sprint 4 |
-| US-014 | Dockerize Application          | P2       | 3      | Sprint 4 |
-| US-015 | Integration Tests              | P2       | 5      | Sprint 4 |
-| US-016 | Kubernetes Manifests           | P3       | 5      | Backlog  |
+| US-001 | Spring Boot Project Setup      | P0       | 3      | Sprint 1 ✅ |
+| US-002 | Docker Compose Infrastructure  | P0       | 3      | Sprint 1 ✅ |
+| US-003 | LLM Integration (Gemini/Claude)| P0       | 5      | Sprint 1 ✅ |
+| US-004 | Qdrant Vector Store Setup      | P0       | 5      | Sprint 2 🔨 |
+| US-005 | Data Ingestion — CSV Loader    | P0       | 8      | Sprint 2 🔨 |
+| US-006 | RAG Search Service             | P0       | 5      | Sprint 2    |
+| US-007 | Guardrail Service              | P0       | 5      | Sprint 2    |
+| US-008 | Conversation Memory            | P1       | 5      | Sprint 3    |
+| US-009 | Streaming Responses (SSE)      | P1       | 5      | Sprint 3    |
+| US-010 | API Key Authentication         | P1       | 5      | Sprint 3    |
+| US-011 | Rate Limiting                  | P2       | 3      | Sprint 4    |
+| US-012 | Global Exception Handling      | P1       | 3      | Sprint 2    |
+| US-013 | Health Checks & Metrics        | P2       | 3      | Sprint 4    |
+| US-014 | Dockerize Application          | P2       | 3      | Sprint 4    |
+| US-015 | Integration Tests              | P2       | 5      | Sprint 4    |
+| US-016 | Kubernetes Manifests           | P3       | 5      | Backlog     |
+| US-017 | Local LLM (Ollama) Profile + Endpoint | P1  | 3      | Sprint 1 ✅ |
 
-**Total: 76 story points across 4 sprints + backlog**
+**Total: 79 story points across 4 sprints + backlog**
