@@ -75,6 +75,12 @@
 			<groupId>org.springframework.ai</groupId>
 			<artifactId>spring-ai-starter-vector-store-qdrant</artifactId>
 		</dependency>
+<!--		Prometheus metrics support via Micrometer (exposes /actuator/prometheus endpoint for scraping)-->
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 
 		<!-- MapStruct (DTO mappings) -->
 		<dependency>
