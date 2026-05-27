@@ -36,7 +36,11 @@ spring:
     vectorstore:
       qdrant:
         host: ${QDRANT_HOST:localhost}
-        port: ${QDRANT_PORT:6333}
+        port: ${QDRANT_PORT:6334}
+        use-tls: ${QDRANT_USE_TLS:false}
+        api-key: ${QDRANT_API_KEY:}            # empty locally, required in prod
+        collection-name: ${QDRANT_COLLECTION:cat-questions}
+        initialize-schema: true
 
     model:
       chat: google-genai
@@ -49,3 +53,11 @@ spring:
         embedding:
           api-key: ${GEMINI_API_KEY} # must be set separately — embedding has its own connection properties
           model: gemini-embedding-002
+management:
+  endpoint:
+    health:
+      show-details: always    # shows all components + details without auth
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus

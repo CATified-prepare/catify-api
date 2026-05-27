@@ -26,7 +26,7 @@
 
 ### US-004: Qdrant Vector Store Setup [ai] — 5 pts *(Carried from Sprint 1)*
 **Assignee:** vagrover  
-**Status:** 🔨 In Progress
+**Status:** Done ✅
 
 Connect to Qdrant and verify embedding pipeline:
 - Configure `spring-ai-starter-vector-store-qdrant` in `application.yaml` (default profile)
@@ -52,7 +52,8 @@ Connect to Qdrant and verify embedding pipeline:
 
 ### US-005: Data Ingestion — CSV Loader [data] — 8 pts
 **Assignee:** prateekarora7  
-**Status:** 🔨 In Progress
+**Status:** 🔨 In Progress  
+**Blocker:** 🚫 Partially blocked on US-004 — `VectorStore.add()` cannot be called until vagrover confirms Qdrant collection is auto-created and embeddings return vectors. All other tasks (CSV reader, `Document` mapper, dedup hash, sample CSV, endpoint scaffold) can proceed immediately.
 
 Ingest CAT questions from CSV files into Qdrant:
 - `CatDataIngestionService` reads CSV files from `cat-data/` directory
@@ -75,7 +76,8 @@ Ingest CAT questions from CSV files into Qdrant:
 
 ### US-006: RAG Search Service [ai] — 5 pts
 **Assignee:** vagrover  
-**Status:** 📝 To Do
+**Status:** 📝 To Do  
+**Blocker:** 🚫 Fully blocked on US-004 (Qdrant must be connected + collection created) AND US-005 (data must be ingested — can't test similarity search on an empty collection).
 
 Build the retrieval layer that grounds LLM answers in real CAT data:
 - Create `CatRagService` with similarity search on Qdrant (`topK=5`, `threshold=0.7`)
@@ -97,7 +99,8 @@ Build the retrieval layer that grounds LLM answers in real CAT data:
 
 ### US-007: Guardrail Service [ai] — 5 pts
 **Assignee:** prateekarora7  
-**Status:** 📝 To Do
+**Status:** 📝 To Do  
+**Blocker:** ✅ None — Redis is already running (US-002 done). Can start any time.
 
 Prevent off-topic questions from hitting the LLM:
 - Create `CatGuardrailService` with two-stage check:
@@ -119,7 +122,8 @@ Prevent off-topic questions from hitting the LLM:
 
 ### US-012: Global Exception Handling [api] — 3 pts
 **Assignee:** prateekarora7  
-**Status:** 📝 To Do
+**Status:** 📝 To Do  
+**Blocker:** ✅ None — fully independent. Best story to start on Day 1.
 
 Consistent error responses across all endpoints:
 - Create `GlobalExceptionHandler` with `@RestControllerAdvice`
@@ -143,18 +147,22 @@ Consistent error responses across all endpoints:
 ## 🤝 Dependencies Between Stories
 
 ```
-US-004 (Qdrant setup)       ──→ US-005 (Data ingestion needs Qdrant collection)
-US-004 (Qdrant setup)       ──→ US-006 (RAG needs Qdrant with data)
-US-005 (Data ingestion)     ──→ US-006 (RAG needs questions in Qdrant)
-US-012 (exception handling) ──  Independent — start any time
-US-007 (guardrail)          ──  Needs Redis running (US-002 done ✅)
+US-004 (Qdrant setup — collection + embeddings working) ──→ US-006 (RAG needs Qdrant with data)
+US-004 (Qdrant — collection created)  ──→ US-005 VectorStore.add() call only (partial dependency)
+US-005 (Data ingestion)               ──→ US-006 (RAG needs questions in Qdrant)
+US-005 scaffolding (CSV, mapper, hash) ── Can start immediately, parallel with US-004
+US-012 (exception handling)           ──  Independent — start any time
+US-007 (guardrail)                    ──  Needs Redis running (US-002 done ✅)
 ```
 
 **Recommended order:**
-1. **Day 1–2:** vagrover finishes US-004; prateekarora7 starts US-012
-2. **Day 3–5:** prateekarora7 starts US-005 (after US-004); vagrover starts US-007
-3. **Day 6–10:** vagrover starts US-006 (after US-004 + US-005); wire RAG + guardrail into controller
-4. **Day 11–14:** Integration testing, curl smoke tests, demo prep
+1. **Day 1–2:** vagrover works US-004 (Qdrant wiring + collection setup); prateekarora7 works US-012 (independent) AND starts US-005 scaffolding (CSV reader, `Document` mapper, dedup hash, sample CSV — no Qdrant needed yet)
+2. **Day 3 (join point):** Once vagrover confirms collection is up + embeddings work → prateekarora7 plugs `VectorStore.add()` into US-005 and runs end-to-end ingestion
+3. **Day 3–7:** vagrover starts US-007 (guardrail — uses existing ChatClient + Redis); prateekarora7 finishes US-005
+4. **Day 6–10:** vagrover starts US-006 (depends on US-004 done + US-005 has data in Qdrant); wire RAG + guardrail into controller
+5. **Day 11–14:** Integration testing, curl smoke tests, demo prep
+
+> 💡 **US-004 + US-005 can be worked in parallel with a join point on Day 3.** prateekarora7 should build everything *except* the `VectorStore.add()` call first, then plug it in once vagrover confirms Qdrant + embeddings are green.
 
 ---
 

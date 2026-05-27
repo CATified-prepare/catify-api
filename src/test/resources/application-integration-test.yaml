@@ -1,0 +1,17 @@
+# ─────────────────────────────────────────────────────────────
+# Integration test configuration
+# Activated by @ActiveProfiles("integration-test") on test classes
+# Inherits everything from application.yaml — only overrides what differs
+# ─────────────────────────────────────────────────────────────
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate          # never modify schema during tests — crash if schema is wrong
+    show-sql: false               # reduce noise in test output
+
+  ai:
+    vectorstore:
+      qdrant:
+        collection-name: cat-questions-test   # isolated — never touches prod collection
+        initialize-schema: true               # auto-create the test collection if missing
