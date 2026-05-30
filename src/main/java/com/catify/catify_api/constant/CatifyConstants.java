@@ -12,11 +12,40 @@ public class CatifyConstants {
      *
      * <p>This is a pure constants class and must not be instantiated.</p>
      */
-    private CatifyConstants(){
+    private CatifyConstants(){}
 
+    public static class ErrorMessageConstants{
+        private ErrorMessageConstants() {}
+
+        public static final String ERROR_CODE_500 = "500";
+
+        public static final String ERROR_CODE_404 = "404";
+
+        public static final String ERROR_CODE_400 = "400";
+
+        public static final String AI_EMPTY_RESPONSE_MESSAGE = "The AI service didn’t return a valid answer. Please try again in a moment.";
+
+        public static final String ONLY_PDF_FILES_ACCEPTED_RESPONSE_MESSAGE = "Only PDF files are accepted";
+
+        public static final String EMPTY_REQUEST_RECEIVED_RESPONSE_MESSAGE = "Empty request received to ingest data";
     }
 
-    public static final String ERROR_CODE_500 = "500";
+    public static class CatifyGenericConstants{
+        private CatifyGenericConstants() {}
 
-    public static final String AI_EMPTY_RESPONSE_MESSAGE = "The AI service didn’t return a valid answer. Please try again in a moment.";
+        public static final String APPLICATION_PDF = "application/pdf";
+
+        public static final String SECTION = "section";
+
+        public static final String TOPIC = "topic";
+
+        public static final String SUBTOPIC = "subtopic";
+
+        public static final String TYPE = "type";
+
+        public static final String DIFFICULTY = "difficulty";
+
+        public static final String DATA_INGESTION_SUCCESS_RESPONSE = "PYQ data ingested successfully";
+
+    }
 }

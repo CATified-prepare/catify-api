@@ -1,4 +1,4 @@
-package com.catify.catify_api.dto;
+package com.catify.catify_api.dto.request.chat;
 
 import jakarta.validation.constraints.NotBlank;
 

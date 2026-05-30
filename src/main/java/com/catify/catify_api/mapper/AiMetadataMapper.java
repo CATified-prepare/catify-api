@@ -1,6 +1,6 @@
 package com.catify.catify_api.mapper;
 
-import com.catify.catify_api.dto.AiMetadata;
+import com.catify.catify_api.dto.request.chat.AiMetadata;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;

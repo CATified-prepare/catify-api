@@ -1,4 +1,4 @@
-package com.catify.catify_api.dto;
+package com.catify.catify_api.dto.request.chat;
 
 /**
  * JSON-friendly subset of Spring AI response metadata.
