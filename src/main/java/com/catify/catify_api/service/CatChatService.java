@@ -1,10 +1,11 @@
 package com.catify.catify_api.service;
 
-import com.catify.catify_api.dto.AiMetadata;
-import com.catify.catify_api.dto.ChatRequest;
-import com.catify.catify_api.dto.ChatResponse;
+import com.catify.catify_api.dto.request.chat.AiMetadata;
+import com.catify.catify_api.dto.request.chat.ChatRequest;
+import com.catify.catify_api.dto.response.chat.ChatResponse;
 import com.catify.catify_api.exception.CatifyException;
 import com.catify.catify_api.mapper.AiMetadataMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.http.HttpStatus;
@@ -13,10 +14,11 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Objects;
 
-import static com.catify.catify_api.constant.CatifyConstants.AI_EMPTY_RESPONSE_MESSAGE;
-import static com.catify.catify_api.constant.CatifyConstants.ERROR_CODE_500;
+import static com.catify.catify_api.constant.CatifyConstants.ErrorMessageConstants.AI_EMPTY_RESPONSE_MESSAGE;
+import static com.catify.catify_api.constant.CatifyConstants.ErrorMessageConstants.ERROR_CODE_500;
 
 @Service
+@Slf4j
 public class CatChatService {
 
     private static final String SYSTEM_PROMPT = """

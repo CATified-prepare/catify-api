@@ -1,7 +1,7 @@
 package com.catify.catify_api.controller;
 
-import com.catify.catify_api.dto.ChatRequest;
-import com.catify.catify_api.dto.ChatResponse;
+import com.catify.catify_api.dto.request.chat.ChatRequest;
+import com.catify.catify_api.dto.response.chat.ChatResponse;
 import com.catify.catify_api.service.CatChatService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

@@ -8,6 +8,10 @@ spring:
       - org.springframework.ai.model.ollama.autoconfigure.OllamaApiAutoConfiguration
       - org.springframework.ai.model.ollama.autoconfigure.OllamaChatAutoConfiguration
       - org.springframework.ai.model.ollama.autoconfigure.OllamaEmbeddingAutoConfiguration
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
 
 
   datasource:
@@ -36,7 +40,9 @@ spring:
     vectorstore:
       qdrant:
         host: ${QDRANT_HOST:localhost}
-        port: ${QDRANT_PORT:6334}
+        # Qdrant gRPC port is 6334. Prefer QDRANT_GRPC_PORT when provided (e.g., in Docker Compose),
+        # but keep backward compatibility with older QDRANT_PORT env setups.
+        port: ${QDRANT_GRPC_PORT:${QDRANT_PORT:6334}}
         use-tls: ${QDRANT_USE_TLS:false}
         api-key: ${QDRANT_API_KEY:}            # empty locally, required in prod
         collection-name: ${QDRANT_COLLECTION:cat-questions}
@@ -61,3 +67,7 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus
+
+server:
+  tomcat:
+    max-swallow-size: 100MB   # helps avoid connection reset on large rejected uploads
