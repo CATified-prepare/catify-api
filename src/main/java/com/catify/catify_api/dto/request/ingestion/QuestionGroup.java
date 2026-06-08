@@ -11,6 +11,8 @@ public class QuestionGroup {
 
     String section;
 
+    Integer year;
+
     String topic;
 
     String subtopic;

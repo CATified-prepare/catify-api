@@ -74,27 +74,95 @@ Ingest CAT questions from CSV files into Qdrant:
 
 ---
 
-### US-006: RAG Search Service [ai]  5 pts
-**Assignee:** prateekarora7
-**Status:**  In Progress
-**Blocker:**  Fully blocked on US-004 (Qdrant must be connected + collection created) AND US-005 (data must be ingested  can't test similarity search on an empty collection).
+### US-006: RAG Search Service with Question-Derived Filters [ai]  8 pts *(re-scoped Jun 8)*
+**Assignee:** vagrover
+**Status:**  In Progress  re-scoped after `ChatRequest` contract change
+**Blocker:**  Fully blocked on US-004 (Qdrant collection must exist) AND US-005 (data must be ingested  can't test similarity search on an empty collection).
 
-Build the retrieval layer that grounds LLM answers in real CAT data:
-- Create `CatRagService` with similarity search on Qdrant (`topK=5`, `threshold=0.7`)
-- Support optional metadata filters: `year` (integer) and `topic` (string)
-- Use `FilterExpressionBuilder` for Qdrant payload filtering
-- Return concatenated context string from matched documents
-- Return empty string (not null) when no results found
-- Unit test with mocked `VectorStore`
+#### What this story does (plain English)
 
-**Done when:** `CatRagService` retrieves relevant CAT questions from Qdrant and passes them as context to the LLM.
+Right now, when a user asks Catify a question, the LLM answers from generic knowledge  it has no idea what's actually in our CAT question bank. **This story makes the LLM answer from *real* CAT data** by looking up relevant past-year questions in Qdrant and feeding them into the prompt as context. That's RAG (Retrieval-Augmented Generation).
 
-**Technical Notes:**
-- This story depends on US-004 being complete (Qdrant must have data)
-- Wire `CatRagService` into the existing `CatChatService`  augment the prompt with retrieved context
-- Keep RAG and chat concerns separate (single responsibility)
-- Runs on default profile  no profile-specific config needed for Sprint 2
-- Current branch work has started the ingestion side with `DataIngestionController`, `DataIngestionService`, and `PyqIngestionRequest` so Qdrant can be seeded with PYQ data before retrieval is wired in.
+To do that well, we have to figure out what the user is asking about. Real users type natural sentences, not form fields  so the system has to *read* the question and pull out structured intent before searching.
+
+#### How it works  end to end
+
+> User types: *"give me hard quant questions from CAT 2023"*
+
+1. **Understander** (`CatQueryFilterExtractor`)  reads the sentence, extracts `{year=2023, topic=quant, difficulty=hard}`.
+2. **Searcher** (`CatRagService`)  runs a semantic search in Qdrant for that question, *filtered* to only documents tagged with year 2023, topic quant, difficulty hard. Returns up to 5 matching CAT documents.
+3. **Chat service** (`CatChatService`)  builds a prompt: *"Here is real CAT context: [those 5 docs]. Question: [user's sentence]. Answer using only this context."* Calls Gemini.
+4. **Response**  the user gets an answer grounded in real PYQ data, plus a `sources` list showing which documents were used (citations).
+
+If the user types *"hello"* or *"explain a permutation problem"* and the understander can't extract any filters, the searcher falls back to pure semantic search (no filters). The user still gets a grounded answer  just without the precision boost of structured filtering.
+
+If the understander **fails** (LLM down, weird response), the searcher also falls back to pure semantic. **The chat call must never crash because of an extraction failure.**
+
+#### The two services this story builds
+
+**1. `CatQueryFilterExtractor`  the "understander"**
+- Single method: `QueryFilters extract(String question)` returning `(Integer year, String topic, String difficulty)`, all optional.
+- Implemented as a small Spring AI `ChatClient` call  built **without** `.defaultSystem(...)` so it doesn't inherit the Catify chat persona and confuse itself.
+- Use `BeanOutputConverter<QueryFilters>` so the LLM returns structured JSON we can deserialize directly  no manual parsing.
+- Cache results in Redis with `@Cacheable` (key = hash of question, TTL = 24h). The same question always extracts the same filters, so we should pay the LLM once per unique question, not on every retry.
+- The extraction prompt locks the vocabulary:
+  - `topic`  one of `quant | varc | dilr` (or null)
+  - `difficulty`  one of `easy | medium | hard` (or null)
+  - `year`  a 4-digit integer or null
+- Output values are normalized to lowercase to match the Qdrant payload exactly (mirrors `DataIngestionService.safeLower(...)`).
+- Any failure  return `QueryFilters.empty()`. Never throw upward.
+
+**2. `CatRagService`  the "searcher"**
+- `retrieve(question, year, topic, difficulty)` accepts the extracted filters.
+- Always runs a semantic similarity search: `topK=5`, `threshold=0.7`.
+- Uses `FilterExpressionBuilder` to AND-combine whichever filters are non-null into a single `Filter.Expression`. If all are null, no filter expression is attached (pure semantic).
+- Returns `RagContext { contextText, sources }`  never null. Use `RagContext.empty()` when nothing matches.
+- `sources` are formatted from `Document.getMetadata()` so the API response can cite which documents were used.
+
+**3. Wiring in `CatChatService.ask(...)`**
+```
+QueryFilters f = extractor.extract(req.question());
+RagContext rag = catRagService.retrieve(req.question(), f.year(), f.topic(), f.difficulty());
+String prompt = rag.isEmpty() ? req.question() : RAG_TEMPLATE.formatted(rag.contextText(), req.question());
+ChatClientResponse r = chatClient.prompt().user(prompt).call().chatClientResponse();
+return new ChatResponse(answer, rag.sources(), tokensUsed, ai);
+```
+
+#### Acceptance Criteria
+
+- [x] `ChatRequest` no longer carries `year` / `topic` / `difficulty` (done Jun 8)
+- [ ] `CatQueryFilterExtractor` extracts `(year, topic, difficulty)` from a natural-language question via a structured-output `ChatClient` call
+- [ ] Extraction results cached in Redis (24h TTL)
+- [ ] Extraction failure falls back to pure semantic search; chat still succeeds end-to-end
+- [ ] `CatRagService` runs similarity search with `topK=5`, `threshold=0.7`; non-null filters are AND-combined via `FilterExpressionBuilder`
+- [ ] Empty Qdrant result  empty `RagContext`, never null; chat still succeeds (LLM gets the raw question with no context block)
+- [ ] `CatChatService` wires extractor  RAG  prompt augmentation; populates `ChatResponse.sources`
+- [ ] Unit tests for `CatRagService` (mocked `VectorStore`) and `CatQueryFilterExtractor` (mocked `ChatClient`)
+- [ ] Integration test: real extraction + retrieval against the `cat-questions-test` collection seeded via `DataIngestionService`
+
+**Done when:** A natural-language question like *"give me hard quant questions from CAT 2023"* drives the pipeline end-to-end: extractor returns `{year=2023, topic=quant, difficulty=hard}`, `CatRagService` runs a filtered Qdrant search, the LLM answers grounded in retrieved context, and `ChatResponse.sources` cites which documents were used.
+
+#### Why this story is bigger than the original (5  8 pts)
+
+The old version was a passthrough  the API client supplied year/topic and we forwarded them to Qdrant. With the contract change, we now build a small *understanding* layer (its own LLM call, its own cache, its own failure handling) on top of the search layer. That's a meaningful uplift, hence +3 points.
+
+#### Technical Notes
+
+- `ChatRequest` is now `{ question, sessionId }`  the structured-filter columns were removed because real users type natural language, not key/value pairs.
+- Build the extraction `ChatClient` from `ChatClient.Builder` **without** a system prompt  the user prompt fully specifies the task. Reusing `CatChatService`'s ChatClient would inherit the Catify persona and corrupt extraction.
+- `BeanOutputConverter<QueryFilters>` is the Spring AI 2.x preferred path for structured output. Avoid hand-rolling JSON parsing.
+- Cache TTL of 24h is intentional: extraction is deterministic per question, so the LLM bill drops to ~zero on repeats.
+- **Topic vocabulary contract (the #1 risk):** the extractor MUST emit values that match the Qdrant payload vocabulary exactly (`quant | varc | dilr`). If `DataIngestionService` ingests `topic="reading comprehension"` the strict-equality filter will silently miss. Either constrain ingest to the same vocabulary OR run a translation table in the extractor. Decide in implementation; document in an ADR.
+- **Co-design with US-007 (guardrail):** both stories run an LLM check on the question. In a Sprint 3 cleanup, consider merging into a single LLM call returning `{ isCatRelated, year?, topic?, difficulty? }`  saves one round-trip per request. Keep them separate for now; tag the optimization for retro.
+- Wire `CatRagService` into the existing `CatChatService`; keep RAG, extraction, and chat concerns in separate classes (single responsibility).
+- Runs on default profile  no profile-specific config needed.
+- The PYQ ingestion side (`DataIngestionController`, `DataIngestionService`, `PyqIngestionRequest`) seeds Qdrant for retrieval testing.
+
+#### Sprint timing (Jun 8  sprint end day)
+
+The full extraction + retrieval scope will not land today. Architect-recommended split:
+- **Today (Sprint 2 close-out):** ship `CatRagService` with **pure semantic search** (no filter expression) wired into `CatChatService` + `ChatResponse.sources` populated. Mark this half of US-006 as **Done**.
+- **Sprint 3 (carry-over):** implement `CatQueryFilterExtractor` + Redis cache + integration test, and wire it in front of `CatRagService`. Either keep it under US-006 as the carried half, or split into a new **US-018 Query Filter Extraction** in the backlog. PO call.
 
 ---
 
@@ -171,13 +239,14 @@ US-007 (guardrail)                      Needs Redis running (US-002 done )
 
 - [ ] Qdrant collection `cat-questions` is created on startup and accepts documents
 - [ ] CSV ingestion loads CAT questions into Qdrant via `POST /api/v1/cat/ingest`
-- [ ] Similarity search returns relevant CAT questions
+- [ ] Similarity search returns relevant CAT questions (pure semantic  filter extraction carried to Sprint 3)
 - [ ] RAG context is injected into LLM prompt via `CatRagService`
+- [ ] `ChatResponse.sources` is populated when RAG context is non-empty
 - [ ] Guardrail rejects non-CAT questions before they reach the LLM
 - [ ] Redis caches guardrail results
 - [ ] All endpoints return consistent JSON error responses
 - [ ] Unit tests written for `CatRagService` and `CatGuardrailService`
-- [ ] `SCRUM_BOARD.md` updated with final status
+- [ ] `SCRUM_BOARD.md` updated with final status; US-006 carry-over (filter extraction) tracked for Sprint 3
 
 ---
 
@@ -192,3 +261,6 @@ US-007 (guardrail)                      Needs Redis running (US-002 done )
 - **Qdrant collection for Sprint 2:** Use a single collection (`cat-questions`) against the default (Gemini) profile. Prod collection naming to be addressed with prod profile later.
 - **Redis for guardrail caching:** Key = hash of the question string. TTL = 1 hour. Prevents repeated LLM calls for the same question.
 - **Exception hierarchy:** `CatifyException` (base)  `NonCatQuestionException`, `VectorStoreException`. All extend `RuntimeException`.
+- **`ChatRequest` contract simplified (Jun 8):** `{ question, sessionId }` only. Structured filters (`year`, `topic`, `difficulty`) were removed because real users type natural language, not key/value pairs. Filter intent is now derived from the question itself via `CatQueryFilterExtractor` (US-006 carry-over to Sprint 3).
+- **Topic vocabulary contract:** the extractor and the ingestion path MUST share the same lowercase vocabulary (`quant | varc | dilr`) for `FilterExpressionBuilder.eq("topic", ...)` to match. Any drift = silent zero-match. Encode in an ADR before merging the extractor.
+- **Co-design opportunity (US-007 + US-006 extractor):** both run an LLM check on the question. In Sprint 3, merge into one structured-output call returning `{ isCatRelated, year?, topic?, difficulty? }`. Saves a round-trip per request.
