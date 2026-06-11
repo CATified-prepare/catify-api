@@ -12,10 +12,12 @@ public class CatifyConstants {
      *
      * <p>This is a pure constants class and must not be instantiated.</p>
      */
-    private CatifyConstants(){}
+    private CatifyConstants() {
+    }
 
-    public static class ErrorMessageConstants{
-        private ErrorMessageConstants() {}
+    public static class ErrorMessageConstants {
+        private ErrorMessageConstants() {
+        }
 
         public static final String ERROR_CODE_500 = "500";
 
@@ -30,8 +32,9 @@ public class CatifyConstants {
         public static final String EMPTY_REQUEST_RECEIVED_RESPONSE_MESSAGE = "Empty request received to ingest data";
     }
 
-    public static class CatifyGenericConstants{
-        private CatifyGenericConstants() {}
+    public static class CatifyGenericConstants {
+        private CatifyGenericConstants() {
+        }
 
         public static final String APPLICATION_PDF = "application/pdf";
 
@@ -46,6 +49,8 @@ public class CatifyConstants {
         public static final String DIFFICULTY = "difficulty";
 
         public static final String DATA_INGESTION_SUCCESS_RESPONSE = "PYQ data ingested successfully";
+
+        public static final String YEAR = "year";
 
     }
 }

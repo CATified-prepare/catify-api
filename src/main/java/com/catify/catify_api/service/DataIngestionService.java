@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.catify.catify_api.constant.CatifyConstants.CatifyGenericConstants.*;
@@ -102,13 +103,17 @@ public class DataIngestionService {
 
     private Map<String, Object> buildMetadata(QuestionGroup questionGroup, Question question) {
         Map<String, Object> metadata = new HashMap<>();
-        metadata.put(SECTION,    questionGroup.getSection());
-        metadata.put(TOPIC,      questionGroup.getTopic());
-        metadata.put(SUBTOPIC,   questionGroup.getSubtopic());
-        metadata.put(TYPE,       question.getType());
-        metadata.put(DIFFICULTY, question.getDifficulty());
+        metadata.put(SECTION,    safeLower(questionGroup.getSection()));
+        metadata.put(TOPIC,      safeLower(questionGroup.getTopic()));
+        metadata.put(SUBTOPIC,   safeLower(questionGroup.getSubtopic()));
+        metadata.put(TYPE,       safeLower(question.getType()));
+        metadata.put(DIFFICULTY, safeLower(question.getDifficulty()));
+        metadata.put(YEAR,       questionGroup.getYear());
 
         return metadata;
+    }
+    private static String safeLower(String s) {
+        return s == null ? null : s.trim().toLowerCase(Locale.ROOT);
     }
 
 }
